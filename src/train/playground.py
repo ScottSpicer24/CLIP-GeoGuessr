@@ -5,6 +5,9 @@ from datasets import load_dataset
 
 '''
 Used to mess around and figure things out
+
+# CHANGE TO NOTEBOOK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 '''
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
