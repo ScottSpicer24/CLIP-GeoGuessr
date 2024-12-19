@@ -11,5 +11,5 @@ for i, example in enumerate(dataset):
     image = example['image']
     image.show()
 
-    #TODO
+    # TODO
     # print labels (country, continent, city...) to a csv
