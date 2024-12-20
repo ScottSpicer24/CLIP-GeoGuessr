@@ -14,6 +14,9 @@ class CLIP_GG(nn.Module):
         self.probe1 = nn.Linear() #TODO
 
     def forward(self, image, text):
-        
+        #
+        model = self.clip
+        image_features = model.encode_image(image)
+        text_features = model.encode_text(text)
         
         return 0
