@@ -32,9 +32,39 @@ def main(FLAGS):
     optimizer = optim.AdamW(model.parameters(), lr=lr)
     # Load the dataset
     dataset = load_dataset('osv5m/osv5m', full=True, split='train', streaming=True, trust_remote_code=True) # Stream the data due to the size
+    
+    #  For the entire training dataset an epoch amount of times
+    for epoch in range(num_epochs):
+        print("Epoch ", epoch)
+        ## Pull out a batch size group of them
+        batch = []
+        for item in dataset:
+            # Preprocess the image and metadata
+            image = preprocess(Image.open(item['image'])).to(device)
+            text = gen_synth_text(item) #TODO
+            batch.append((image, text))
+            
+            # Train the batch then clear it when you are done
+            if batch.count == batch_size:
+                train_batch(batch) #TODO
+                batch.clear()
 
-    # Pull out a batch size 
+            # Train leftovers at end of dataset
+            if batch.count() > 0:
+                train_batch(batch) #TODO
+                batch.clear()
 
+# Generates synthetic text for the language encoder
+def gen_synth_text(data):
+    # Extract attribute values 
+    country = data['country'].strip()
+    region = data['region'].strip()
+    sub_region = data['sub-region'].strip()
+    city = data['city'].strip()
+
+    # Generate and return string
+    string = f"A street view image in the country of {country}, near the town or city of {city}, within the region of {region}, more specifically {sub_region}."
+    return string
 
 
 
