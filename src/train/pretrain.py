@@ -36,12 +36,13 @@ def main(FLAGS):
     #  For the entire training dataset an epoch amount of times
     for epoch in range(num_epochs):
         print("Epoch ", epoch)
+        
         ## Pull out a batch size group of them
         batch = []
         for item in dataset:
             # Preprocess the image and metadata
             image = preprocess(Image.open(item['image'])).to(device)
-            text = gen_synth_text(item) #TODO
+            text = clip.tokenize(gen_synth_text(item)).to(device)
             batch.append((image, text))
             
             # Train the batch then clear it when you are done
@@ -57,14 +58,18 @@ def main(FLAGS):
 # Generates synthetic text for the language encoder
 def gen_synth_text(data):
     # Extract attribute values 
-    country = data['country'].strip()
+    country = data['country'].strip()   
     region = data['region'].strip()
     sub_region = data['sub-region'].strip()
     city = data['city'].strip()
 
     # Generate and return string
-    string = f"A street view image in the country of {country}, near the town or city of {city}, within the region of {region}, more specifically {sub_region}."
+    string = f"A street view image in the country of {country}, within the region of {region}, more specifically {sub_region}, near the town or city of {city}."
     return string
+
+def train_batch(model, data, criterion, optimizer):
+    image = data[0]
+    text = data[1]
 
 
 
