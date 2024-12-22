@@ -9,9 +9,9 @@ CLIP paper (pages 4 and 5): https://arxiv.org/pdf/2103.00020
 '''
 
 class InfoNCELoss(nn.Module):
-    def __init__(self, temp=0.07):
+    def __init__(self, initial_temp=0.07):
         super(InfoNCELoss, self).__init__()
-        self.temperature = temp
+        self.temperature = nn.Parameter(torch.tensor([initial_temp]).log()) # Temperature as a learnable parameter, initialized with log(1/temp)
         self.criterion = nn.CrossEntropyLoss()
 
     def forward(self, image_embeds, text_embeds):
@@ -24,7 +24,7 @@ class InfoNCELoss(nn.Module):
         logits = torch.matmul(image_embeds, text_embeds.T) * torch.exp(self.temperature)
 
         # Symetric loss between the 2 different embeddings
-        labels = torch.arrange(n) # each index is it's own label
+        labels = torch.arange(n) # each index is it's own label
         loss_image_to_text = self.criterion(logits, labels)
         loss_text_to_image = self.criterion(logits.T, labels)
 

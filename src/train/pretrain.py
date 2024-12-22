@@ -35,25 +35,29 @@ def main(FLAGS):
     
     #  For the entire training dataset an epoch amount of times
     for epoch in range(num_epochs):
-        print("Epoch ", epoch)
-        
-        ## Pull out a batch size group of them
+        print("Epoch ", epoch+1)
+        # Pull out a batch size group of them
         batch = []
-        for item in dataset:
-            # Preprocess the image and metadata
-            image = preprocess(Image.open(item['image'])).to(device)
-            text = clip.tokenize(gen_synth_text(item)).to(device)
+        for i, item in enumerate(dataset):
+            if i == 34:
+                break
+            # Extract and save the image and it's metadata
+            image = item['image'] # preprocess(Image.open(item['image'])).to(device)
+            text = gen_synth_text(item) # clip.tokenize(gen_synth_text(item)).to(device)
             batch.append((image, text))
+
+            #print(text)
             
             # Train the batch then clear it when you are done
-            if batch.count == batch_size:
-                train_batch(batch) #TODO
+            if len(batch) == batch_size:
+                train_batch(model, preprocess, batch, criterion, optimizer, device)
                 batch.clear()
 
             # Train leftovers at end of dataset
-            if batch.count() > 0:
-                train_batch(batch) #TODO
+            if len(batch) > 0:
+                train_batch(model, preprocess, batch, criterion, optimizer, device)
                 batch.clear()
+
 
 # Generates synthetic text for the language encoder
 def gen_synth_text(data):
@@ -67,11 +71,29 @@ def gen_synth_text(data):
     string = f"A street view image in the country of {country}, within the region of {region}, more specifically {sub_region}, near the town or city of {city}."
     return string
 
-def train_batch(model, data, criterion, optimizer):
-    image = data[0]
-    text = data[1]
+def train_batch(model, preprocess, data, criterion, optimizer, device):
+    # Set the model to be trained and zero gradients 
+    model.train()
+    optimizer.zero_grad()
+    
+    # Pull and preprocess the image and the text description from the data
+    images = [preprocess(Image.open(item[0])).to(device) for item in data]
+    texts = [clip.tokenize(item[1]).to(device) for item in data]
 
+    # Create a batch by stacking the preprocessed images and text
+    image_batch = torch.stack(images)
+    text_batch = torch.stack(texts)
+    
+    # Get the image and text embeddings
+    image_embed = model.encode_image(image_batch)
+    text_embed = model.encode_text(text_batch)
 
+    # Compute the contrastive loss and optimize model from loss
+    loss = criterion(image_embed, text_embed)
+    loss.backward()
+    optimizer.step()
+
+    print(loss)
 
 
 if __name__ == "__main__":
