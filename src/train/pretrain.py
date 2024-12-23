@@ -5,6 +5,8 @@ from PIL import Image
 from datasets import load_dataset
 import argparse
 from InfoNCELoss import InfoNCELoss
+import os
+import csv
 
 '''
 Further pre-trains the CLIP model for geolocalization
@@ -31,7 +33,7 @@ def main(FLAGS):
     # Set the optimizer function
     optimizer = optim.AdamW(model.parameters(), lr=lr)
     # Load the dataset
-    dataset = load_dataset('osv5m/osv5m', full=True, split='train', streaming=True, trust_remote_code=True) # Stream the data due to the size
+    dataset = load_dataset('osv5m/osv5m', full=True, split='train', streaming=True) # Stream the data due to the size
     
     #  For the entire training dataset an epoch amount of times
     for epoch in range(num_epochs):
@@ -39,14 +41,14 @@ def main(FLAGS):
         # Pull out a batch size group of them
         batch = []
         for i, item in enumerate(dataset):
-            if i == 34:
-                break
+            if i%1000 == 0:
+                string = f"Epoch: {epoch+1}, i:{i}"
+                csvPrint("CLIP_pretrain_trial.csv", string)
+            
             # Extract and save the image and it's metadata
             image = item['image'] # preprocess(Image.open(item['image'])).to(device)
             text = gen_synth_text(item) # clip.tokenize(gen_synth_text(item)).to(device)
             batch.append((image, text))
-
-            #print(text)
             
             # Train the batch then clear it when you are done
             if len(batch) == batch_size:
@@ -57,6 +59,11 @@ def main(FLAGS):
             if len(batch) > 0:
                 train_batch(model, preprocess, batch, criterion, optimizer, device)
                 batch.clear()
+        
+        # After the last epoch save model
+        torch.save(model.state_dict(), 'clip_geolocalization_weights.pth')
+        print("Model weights saved to clip_geolocalization_weights.pth")
+
 
 
 # Generates synthetic text for the language encoder
@@ -71,14 +78,27 @@ def gen_synth_text(data):
     string = f"A street view image in the country of {country}, within the region of {region}, more specifically {sub_region}, near the town or city of {city}."
     return string
 
+def csvPrint(path, item):
+    # See if path exist, and append to it
+    csv_exists = os.path.exists(path)
+    attr = path.rstrip(".csv") # For the header
+    with open(path, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        # Write header if file doesn't exist
+        if not csv_exists:
+            writer.writerow([attr])
+        
+        # Write attribute values to csv
+        writer.writerow([item])
+
 def train_batch(model, preprocess, data, criterion, optimizer, device):
     # Set the model to be trained and zero gradients 
     model.train()
     optimizer.zero_grad()
     
     # Pull and preprocess the image and the text description from the data
-    images = [preprocess(Image.open(item[0])).to(device) for item in data]
-    texts = [clip.tokenize(item[1]).to(device) for item in data]
+    images = [preprocess(item[0]).to(device) for item in data]
+    texts = clip.tokenize([item[1] for item in data]).to(device)
 
     # Create a batch by stacking the preprocessed images and text
     image_batch = torch.stack(images)
