@@ -19,6 +19,7 @@ def main(FLAGS):
     lr = FLAGS.learning_rate
     num_epochs = FLAGS.num_epochs
     batch_size = FLAGS.batch_size
+    print(f"LR selected: {lr}, epochs: {num_epochs}, batch size: {batch_size}")
     
     # Check if cuda is available
     use_cuda = torch.cuda.is_available()
@@ -29,7 +30,7 @@ def main(FLAGS):
     # Initialize the model and send to device 
     model, preprocess = clip.load("ViT-B/32", device=device)
     # Set the loss function 
-    criterion = InfoNCELoss()
+    criterion = InfoNCELoss().to(device)
     # Set the optimizer function
     optimizer = optim.AdamW(model.parameters(), lr=lr)
     # Load the dataset
@@ -98,11 +99,11 @@ def train_batch(model, preprocess, data, criterion, optimizer, device):
     
     # Pull and preprocess the image and the text description from the data
     images = [preprocess(item[0]).to(device) for item in data]
-    texts = clip.tokenize([item[1] for item in data]).to(device)
+    texts = [item[1] for item in data]  # Extract the text as a list of strings
+    text_batch = clip.tokenize(texts).to(device) # returns a batch tensor when you pass it a list of strings. There’s no need to stack this output again.
 
-    # Create a batch by stacking the preprocessed images and text
-    image_batch = torch.stack(images)
-    text_batch = torch.stack(texts)
+    # Create a batch by stacking the preprocessed images
+    image_batch = torch.stack(images).to(device)
     
     # Get the image and text embeddings
     image_embed = model.encode_image(image_batch)
@@ -113,7 +114,7 @@ def train_batch(model, preprocess, data, criterion, optimizer, device):
     loss.backward()
     optimizer.step()
 
-    print(loss)
+    #print(loss)
 
 
 if __name__ == "__main__":

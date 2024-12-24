@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.functional as F
+import torch.nn.functional as F
 
 '''
 Refrence: 
@@ -24,7 +24,7 @@ class InfoNCELoss(nn.Module):
         logits = torch.matmul(image_embeds, text_embeds.T) * torch.exp(self.temperature)
 
         # Symetric loss between the 2 different embeddings
-        labels = torch.arange(n) # each index is it's own label
+        labels = torch.arange(n).to(image_embeds.device) # each index is it's own label
         loss_image_to_text = self.criterion(logits, labels)
         loss_text_to_image = self.criterion(logits.T, labels)
 
