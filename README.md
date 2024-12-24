@@ -1,7 +1,8 @@
 # CLIP-GeoGuessr
-Fine Tuned version of OpenAI's CLIP model for Image Geolocation. Git repo: https://github.com/openai/CLIP.git 
+Further pre-trained and fine tuned version of OpenAI's CLIP model for Image Geolocation. 
+Git repo: https://github.com/openai/CLIP.git 
 
-This is in the conda enviorment but you also can obtain the model here:
+CLIP is in the conda enviorment but you also can obtain the model here:
 ```bash
 pip install git+https://github.com/openai/CLIP.git 
 ```
@@ -24,10 +25,9 @@ conda activate CLIP-GG
 ```
 
 Recreate the environment to install the required Python libraries:
-
 ```bash
+pip install git+https://github.com/openai/CLIP.git 
 conda env create -f environment.yml
-# pip install git+https://github.com/openai/CLIP.git 
 ```
 
 ### 3. Obtain Data
@@ -35,20 +35,20 @@ I use the OpenStreetView-5M dataset. The dataset is 5 million images and a csv o
 Dataset card: https://huggingface.co/datasets/osv5m/osv5m
 
 #### Option 1:
-Directly load the dataset using load_dataset:
+Directly load and stream the dataset using load_dataset:
 ```python
 from datasets import load_dataset
-dataset = load_dataset('osv5m/osv5m', full=False)
+dataset = load_dataset('osv5m/osv5m', full=False, split='train', streaming=True)
 ```
 
 #### Option 2:
-Manual download part of the dataset from huggingface:
+Manual download part (or all) of the dataset from huggingface and unzip the files:
 Image zips: https://huggingface.co/datasets/osv5m/osv5m/tree/main/images/train
 CSV metadata: https://huggingface.co/datasets/osv5m/osv5m/tree/main
 Then run unzip.py in ./src/preprocessing
 
 #### Option 3:
-Download the full dataset:
+Download the full dataset from the cloud:
 ```python
 # download the full dataset
 from huggingface_hub import snapshot_download
