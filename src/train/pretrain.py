@@ -50,24 +50,23 @@ def main(FLAGS):
             image = item['image'] # preprocess(Image.open(item['image'])).to(device)
             text = gen_synth_text(item) # clip.tokenize(gen_synth_text(item)).to(device)
             batch.append((image, text)) # Add to the batch
-            
-            loss = -1
+
             # Train the batch then clear it when you are done
             if len(batch) == batch_size:
-                if i <= batch_size*3:
+                # Print first 5 images
+                if i <= batch_size*5:
                     print(f"training on i of {i}", flush=True)
                     image.show()
+                # Train batch then clear
                 loss = train_batch(model, preprocess, batch, criterion, optimizer, device)
                 batch.clear()
-
-            if i%1000 == 0:
+                
+                # Print info 
                 curr_time = time.time()
                 elapsed = curr_time - start_time 
-
                 string = f"Epoch: {epoch+1}, i: {i}, time: {elapsed}, loss: {loss}"
                 print(string, flush=True)
-                
-                csvPrint("CLIP_pretrain.csv", epoch, i, elapsed, loss, text)
+                csvPrint("CLIP_pretrain.csv", epoch+1, i, elapsed, loss, text)
         
         # After the last epoch save model
         torch.save(model.state_dict(), 'clip_geolocalization_weights.pth')
