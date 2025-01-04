@@ -151,7 +151,7 @@ if __name__ == "__main__":
                         help='Initial learning rate.')
     parser.add_argument('--num_epochs',
                         type=int,
-                        default=2,
+                        default=1,
                         help='Number of epochs to run trainer.')
     parser.add_argument('--batch_size',
                         type=int, default=128,
