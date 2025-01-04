@@ -4,3 +4,5 @@ src/data
 01.zip
 02.zip
 03.zip
+src/train/__pycache__
+src/train/pretrain_out.txt
