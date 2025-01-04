@@ -20,13 +20,13 @@ def main(FLAGS):
     lr = FLAGS.learning_rate
     num_epochs = FLAGS.num_epochs
     batch_size = FLAGS.batch_size
-    print(f"LR selected: {lr}, epochs: {num_epochs}, batch size: {batch_size}")
+    print(f"LR selected: {lr}, epochs: {num_epochs}, batch size: {batch_size}", flush=True)
     
     # Check if cuda is available
     use_cuda = torch.cuda.is_available()
     # Set proper device based on cuda availability 
     device = torch.device("cuda" if use_cuda else "cpu")
-    print(f"Device selected: {device}")
+    print(f"Device selected: {device}", flush=True)
     
     # Initialize the model and send to device 
     model, preprocess = clip.load("ViT-B/32", device=device)
