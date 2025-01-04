@@ -91,11 +91,10 @@ def gen_synth_text(data, codes):
         print(f"country code, {country}, not found.", flush=True)
 
     region = data['region'].strip()
-    sub_region = data['sub-region'].strip()
     city = data['city'].strip()
 
     # Generate and return string
-    string = f"A street view image in the country of {country}, within the region of {region}, more specifically {sub_region}, near the town or city of {city}."
+    string = f"A street view image in the country of {country}, within the region of {region}, near the town or city of {city}."
     return string
 
 def csvPrint(path, epoch, i, time, loss, text):
@@ -155,7 +154,7 @@ if __name__ == "__main__":
                         default=2,
                         help='Number of epochs to run trainer.')
     parser.add_argument('--batch_size',
-                        type=int, default=64,
+                        type=int, default=128,
                         help='Batch size. Must divide evenly into the dataset sizes.')
     
     FLAGS = None
