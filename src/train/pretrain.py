@@ -44,7 +44,8 @@ def main(FLAGS):
     codes = {}
     # Open file and write row
     with open(codes_csv_path, mode='r') as file:
-        for line in file:
+        codes_reader = csv.reader(file)
+        for line in codes_reader:
             codes[line[0].upper()] = line[1]
         
     #  For the entire training dataset an epoch amount of times
@@ -103,10 +104,10 @@ def csvPrint(path, epoch, i, time, loss, text):
     attr = path.rstrip(".csv") # For the header
     
     # Format time
-    hours = time // (60*60)
-    mins = (time % (60*60)) // 60
-    sec = time % 60
-    new_time = f"{hours:02d} : {mins:02d} : {sec:02d}"
+    hours = (int)(time // (60*60))
+    mins = (int)((time % (60*60)) // 60)
+    sec = (int)(time % 60)
+    new_time = f"{hours:02}:{mins:02}:{sec:02}"
     
     # Open file and write row
     with open(path, mode='a', newline='') as file:
@@ -116,7 +117,7 @@ def csvPrint(path, epoch, i, time, loss, text):
             writer.writerow(["Epoch", "i", "elapsed time", "loss", "last item text"])
         
         # Write attribute values to csv
-        writer.writerow([epoch, i, new_time, loss.item(), text])
+        writer.writerow([epoch, i, new_time, round(loss.item(), 4), text])
 
 def train_batch(model, preprocess, data, criterion, optimizer, device):
     # Set the model to be trained and zero gradients 
