@@ -39,6 +39,14 @@ def main(FLAGS):
     #Iinitialize time
     start_time = time.time()
 
+    # Get the country codes as a dictionary mapped to their names
+    codes_csv_path = "../preprocess/osv5m_countries.csv"
+    codes = {}
+    # Open file and write row
+    with open(codes_csv_path, mode='r') as file:
+        for line in file:
+            codes[line[0].upper()] = line[1]
+        
     #  For the entire training dataset an epoch amount of times
     for epoch in range(num_epochs):
         print("Epoch ", epoch+1)
@@ -48,7 +56,7 @@ def main(FLAGS):
         for i, item in enumerate(dataset):
             # Extract and save the image and it's metadata
             image = item['image'] # preprocess(Image.open(item['image'])).to(device)
-            text = gen_synth_text(item) # clip.tokenize(gen_synth_text(item)).to(device)
+            text = gen_synth_text(item, codes) # clip.tokenize(gen_synth_text(item)).to(device)
             batch.append((image, text)) # Add to the batch
 
             # Train the batch then clear it when you are done
@@ -73,9 +81,14 @@ def main(FLAGS):
         print("Model weights saved to clip_geolocalization_weights.pth")
 
 # Generates synthetic text for the language encoder
-def gen_synth_text(data):
+def gen_synth_text(data, codes):
     # Extract attribute values 
-    country = data['country'].strip()   
+    country = data['country'].strip()
+    if country in codes:
+        country = codes[country]
+    else:
+        print(f"country code, {country}, not found.", flush=True)
+
     region = data['region'].strip()
     sub_region = data['sub-region'].strip()
     city = data['city'].strip()
@@ -88,6 +101,13 @@ def csvPrint(path, epoch, i, time, loss, text):
     # See if path exist, and append to it
     csv_exists = os.path.exists(path)
     attr = path.rstrip(".csv") # For the header
+    
+    # Format time
+    hours = time // (60*60)
+    mins = (time % (60*60)) // 60
+    sec = time % 60
+    new_time = f"{hours:02d} : {mins:02d} : {sec:02d}"
+    
     # Open file and write row
     with open(path, mode='a', newline='') as file:
         writer = csv.writer(file)
@@ -96,7 +116,7 @@ def csvPrint(path, epoch, i, time, loss, text):
             writer.writerow(["Epoch", "i", "elapsed time", "loss", "last item text"])
         
         # Write attribute values to csv
-        writer.writerow([epoch, i, time, loss, text])
+        writer.writerow([epoch, i, new_time, loss.item(), text])
 
 def train_batch(model, preprocess, data, criterion, optimizer, device):
     # Set the model to be trained and zero gradients 
