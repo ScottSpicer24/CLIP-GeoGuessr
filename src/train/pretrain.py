@@ -7,11 +7,12 @@ import argparse
 from InfoNCELoss import InfoNCELoss
 import os
 import csv
+import time
 
 '''
-Further pre-trains the CLIP model for geolocalization
+Further pre-trains the CLIP model for geolocalization.
 
-JUST the 2 encoders NOT the linear probe
+Just the 2 encoders NOT the linear probe.
 '''
 
 def main(FLAGS):
@@ -41,10 +42,20 @@ def main(FLAGS):
         print("Epoch ", epoch+1)
         # Pull out a batch size group of them
         batch = []
+
+        start_time = time.now()
+        
         for i, item in enumerate(dataset):
             if i%1000 == 0:
                 string = f"Epoch: {epoch+1}, i:{i}"
                 csvPrint("CLIP_pretrain_trial.csv", string)
+
+            if i == 5000:
+                end_time = time.now()
+                final_time = end_time - start_time
+                print(f"Time: {final_time}")
+                break
+                
             
             # Extract and save the image and it's metadata
             image = item['image'] # preprocess(Image.open(item['image'])).to(device)
