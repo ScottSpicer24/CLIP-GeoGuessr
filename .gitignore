@@ -6,3 +6,5 @@ src/data
 03.zip
 src/train/__pycache__
 src/train/pretrain_out.txt
+src/train/OpenBLAS
+
