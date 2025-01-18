@@ -1,3 +1,0 @@
-nohup: ignoring input
-LR selected: 1e-06, epochs: 1, batch size: 128
-Device selected: cpu

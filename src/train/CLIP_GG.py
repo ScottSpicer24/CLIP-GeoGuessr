@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.functional as F
 
 
+
 class CLIP_GG(nn.Module):
     def __init__(self, device):
         super(CLIP_GG, self).__init__()
@@ -11,8 +12,11 @@ class CLIP_GG(nn.Module):
         self.clip = model
         self.pp = preprocess
         self.device = device
+
+        self.geolabels = intialize_geolabels()
         
-        self.probe1 = nn.Linear() #TODO
+        self.probe1 = nn.Linear(self.clip.visual.output_dim, len(self.geolabels)) #TODO
+        
 
     def forward(self, data):
         # Initialize varaibles
@@ -28,10 +32,24 @@ class CLIP_GG(nn.Module):
         # Create a batch by stacking the preprocessed images
         image_batch = torch.stack(images).to(device)
         
-        # Get the image and text embeddings
+        # Get the image embeddings
+        # We don't need the text embeddings as that is what is being predected
         image_embed = model.encode_image(image_batch)
-        text_embed = model.encode_text(text_batch)
+        
+        # Pass to emnbeddings into probe
+        logits = self.probe(image_embed)
 
-        
-        
-        return 0   
+        return logits   
+    
+
+def intialize_geolabels():
+    # TODO 
+    '''
+    return a 2d array:
+    0 is country and 1 to ~31 is the city.
+    |   0   |    1     |   2    |...
+    |   USA |   NYC    |   LA   |...
+    |   UK  | London   | Leeds  |...
+    ...
+    '''
+    path = "../preprocess/osv5m"
