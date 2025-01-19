@@ -2,6 +2,7 @@ import clip
 import torch
 import torch.nn as nn
 import torch.functional as F
+import csv
 
 
 
@@ -14,8 +15,14 @@ class CLIP_GG(nn.Module):
         self.device = device
 
         self.geolabels = intialize_geolabels()
+        self.countries = [country for country in self.geolabels.keys()]
         
-        self.probe1 = nn.Linear(self.clip.visual.output_dim, len(self.geolabels)) #TODO
+        self.probe1 = nn.Linear(self.clip.visual.output_dim, len(self.geolabels)) 
+
+        # city-level probes for each country
+        self.probe2 = nn.ModuleDict({
+            country : nn.Linear(self.clip.visual.output_dim, len(cities)) for country, cities in self.geolabels.items()
+        })
         
 
     def forward(self, data):
@@ -26,8 +33,8 @@ class CLIP_GG(nn.Module):
         
         # Pull and preprocess the image and the text description from the data
         images = [preprocess(item[0]).to(device) for item in data]
-        texts = [item[1] for item in data]  # Extract the text as a list of strings
-        text_batch = clip.tokenize(texts).to(device) # returns a batch tensor when you pass it a list of strings. There’s no need to stack this output again.
+        # texts = [item[1] for item in data]  # Extract the text as a list of strings
+        # text_batch = clip.tokenize(texts).to(device) # returns a batch tensor when you pass it a list of strings. There’s no need to stack this output again.
 
         # Create a batch by stacking the preprocessed images
         image_batch = torch.stack(images).to(device)
@@ -37,19 +44,24 @@ class CLIP_GG(nn.Module):
         image_embed = model.encode_image(image_batch)
         
         # Pass to emnbeddings into probe
-        logits = self.probe(image_embed)
+        logits1 = self.probe1(image_embed)
+        pred_country = self.countries[torch.argmax(logits1, dim=1)]
+        
+        city_probe = self.probe2[pred_country]
+        logits2 = city_probe(image_embed)
+        city_list = self.geolabels[pred_country]
+        pred_city = city_list[torch.argmax(logits2, dim=1)]
 
-        return logits   
+        return pred_country, pred_city  
     
 
 def intialize_geolabels():
-    # TODO 
-    '''
-    return a 2d array:
-    0 is country and 1 to ~31 is the city.
-    |   0   |    1     |   2    |...
-    |   USA |   NYC    |   LA   |...
-    |   UK  | London   | Leeds  |...
-    ...
-    '''
-    path = "../preprocess/osv5m"
+    path = "../preprocess/geolabels.csv"
+    res = {}
+    with open(path, mode='r') as file:
+        csvFile = csv.reader(file)
+        for line in csvFile:
+            country = line[0]
+            res[country] = line[1]
+    
+    return res

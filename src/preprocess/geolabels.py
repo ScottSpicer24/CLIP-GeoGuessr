@@ -24,14 +24,14 @@ def main():
         writer = csv.writer(file)
         
         for key, value in map.items():
-            entry = [key]
+            entry = []
             for i, city in enumerate(value):
                 '''if i == 30:
                     break'''
                 entry.append(city)
 
             # Write attribute values to csv
-            writer.writerow([entry])
+            writer.writerow([key, entry])
 
 if __name__ == "__main__":
     main()
