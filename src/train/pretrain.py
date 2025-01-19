@@ -35,7 +35,7 @@ def main(FLAGS):
     # Set the optimizer function
     optimizer = optim.AdamW(model.parameters(), lr=lr)
     # Load the dataset
-    dataset = load_dataset('osv5m/osv5m', full=True, split='train', streaming=True, trust_remote_code=True) # Stream the data due to the size
+    dataset = load_dataset('osv5m/osv5m', full=False, split='train', trust_remote_code=True) # Stream the data due to the size
     #Iinitialize time
     start_time = time.time()
 
@@ -53,6 +53,7 @@ def main(FLAGS):
         print("Epoch ", epoch+1)
         # Pull out a batch size group of them
         batch = []
+        num_batches = 0
         
         for i, item in enumerate(dataset):
             # Extract and save the image and it's metadata
@@ -62,8 +63,9 @@ def main(FLAGS):
 
             # Train the batch then clear it when you are done
             if len(batch) == batch_size:
+                num_batches += 1
                 # Print first 5 images
-                if i <= batch_size*5:
+                if num_batches <= 5:
                     print(f"training on i of {i}", flush=True)
                     #image.()
                 # Train batch then clear
@@ -73,12 +75,23 @@ def main(FLAGS):
                 # Print info 
                 curr_time = time.time()
                 elapsed = curr_time - start_time 
-                string = f"Epoch: {epoch+1}, i: {i}, time: {elapsed}, loss: {loss}"
+                # Format time
+                hours = (int)(elapsed // (60*60))
+                mins = (int)((elapsed % (60*60)) // 60)
+                sec = (int)(elapsed % 60)
+                new_time = f"{hours:02}:{mins:02}:{sec:02}"
+                
+                string = f"Epoch: {epoch+1}, index: {i+1}, time: {new_time}, loss: {loss}"
                 print(string, flush=True)
-                csvPrint("CLIP_pretrain.csv", epoch+1, i, elapsed, loss, text)
+                #csvPrint("CLIP_pretrain.csv", epoch+1, i, elapsed, loss, text)
+
+            if num_batches % 1000 == 0:
+                num = num_batches // 1000
+                outpath = f'./model_weights/clip_geolocalization_weights_{epoch+1}_{num}.pth'
+                torch.save(model.state_dict(), outpath)
         
         # After the last epoch save model
-        torch.save(model.state_dict(), 'clip_geolocalization_weights.pth')
+        torch.save(model.state_dict(), './model_weights/clip_geolocalization_weights_final.pth')
         print("Model weights saved to clip_geolocalization_weights.pth")
 
 # Generates synthetic text for the language encoder
@@ -97,6 +110,7 @@ def gen_synth_text(data, codes):
     string = f"A street view image in the country of {country}, within the region of {region}, near the town or city of {city}."
     return string
 
+'''
 def csvPrint(path, epoch, i, time, loss, text):
     # See if path exist, and append to it
     csv_exists = os.path.exists(path)
@@ -117,7 +131,7 @@ def csvPrint(path, epoch, i, time, loss, text):
         
         # Write attribute values to csv
         writer.writerow([epoch, i, new_time, round(loss.item(), 4), text])
-
+'''
 def train_batch(model, preprocess, data, criterion, optimizer, device):
     # Set the model to be trained and zero gradients 
     model.train()
@@ -151,7 +165,7 @@ if __name__ == "__main__":
                         help='Initial learning rate.')
     parser.add_argument('--num_epochs',
                         type=int,
-                        default=1,
+                        default=2,
                         help='Number of epochs to run trainer.')
     parser.add_argument('--batch_size',
                         type=int, default=128,
