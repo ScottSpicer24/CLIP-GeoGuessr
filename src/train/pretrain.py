@@ -63,11 +63,9 @@ def main(FLAGS):
 
             # Train the batch then clear it when you are done
             if len(batch) == batch_size:
+                # new batch so increment
                 num_batches += 1
-                # Print first 5 images
-                if num_batches <= 5:
-                    print(f"training on i of {i}", flush=True)
-                    #image.()
+                
                 # Train batch then clear
                 loss = train_batch(model, preprocess, batch, criterion, optimizer, device)
                 batch.clear()
