@@ -11,8 +11,7 @@ import time
 
 '''
 Further pre-trains the CLIP model for geolocalization.
-
-Just the 2 encoders NOT the linear probe.
+Just the 2 encoders NOT the linear probes.
 '''
 
 def main(FLAGS):
@@ -33,9 +32,9 @@ def main(FLAGS):
     # Set the loss function 
     criterion = InfoNCELoss().to(device)
     # Set the optimizer function
-    optimizer = optim.AdamW(model.parameters(), lr=lr)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
     # Load the dataset
-    dataset = load_dataset('osv5m/osv5m', full=False, split='train', trust_remote_code=True) # Stream the data due to the size
+    dataset = load_dataset('osv5m/osv5m', full=False, split='train', trust_remote_code=True) 
     #Iinitialize time
     start_time = time.time()
 
@@ -138,19 +137,23 @@ def train_batch(model, preprocess, data, criterion, optimizer, device):
     # Pull and preprocess the image and the text description from the data
     images = [preprocess(item[0]).to(device) for item in data]
     texts = [item[1] for item in data]  # Extract the text as a list of strings
+    
     text_batch = clip.tokenize(texts).to(device) # returns a batch tensor when you pass it a list of strings. There’s no need to stack this output again.
-
     # Create a batch by stacking the preprocessed images
-    image_batch = torch.stack(images).to(device)
+    image_batch = torch.stack(images).to(device) 
+    has_nan = torch.isnan(image_batch).any()
+    print("Nan: ", has_nan)
     
     # Get the image and text embeddings
     image_embed = model.encode_image(image_batch)
     text_embed = model.encode_text(text_batch)
+    print(f'Embedings:\nImage: {image_embed},\nText: {text_embed}\n') # ********************** NOT GOOD HERE ***********************************************************************************************
 
+    print("*********************************************************************************************************")
     # Compute the contrastive loss and optimize model from loss
     loss = criterion(image_embed, text_embed)
     loss.backward()
-    optimizer.step()
+    #optimizer.step()
 
     return loss
 
