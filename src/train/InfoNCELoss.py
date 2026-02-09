@@ -21,7 +21,7 @@ class InfoNCELoss(nn.Module):
         n = image_embeds.size(0)
 
         # Cosine Similarities
-        logits = torch.matmul(image_embeds, text_embeds.T) * torch.exp(self.temperature)
+        logits = F.cosine_similarity(image_embeds, text_embeds.T) * torch.exp(self.temperature)
 
         # Symetric loss between the 2 different embeddings
         labels = torch.arange(n).to(image_embeds.device) # each index is it's own label
@@ -31,5 +31,3 @@ class InfoNCELoss(nn.Module):
         # Return results 
         loss = (loss_image_to_text + loss_text_to_image) / 2
         return loss
-
-

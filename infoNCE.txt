@@ -1,0 +1,51 @@
+'''
+InfoNCE loss uses cosine similarities (scaled by a temperature parameter)
+to form a probability distribution via the softmax.
+
+Then, it computes the negative log likelihood (i.e. cross entropy loss)
+of the positive pair being correctly identified among all pairs.
+
+In other words, you're taking the negative log of the probability
+(derived from the cosine similarities) that the matching pair is correct.
+
+# https://github.com/RElbers/info-nce-pytorch
+# pip install info-nce-pytorch
+from info_nce import InfoNCE, info_nce
+loss = InfoNCE()
+batch_size, embedding_size = 32, 128
+query = torch.randn(batch_size, embedding_size) # this is the image encodings
+positive_key = torch.randn(batch_size, embedding_size) # this is the text encodings (what the image encodings are being aligned to.)
+output = loss(query, positive_key)
+'''
+
+class InfoNCELoss(nn.Module):
+    def __init__(self, initial_temp=0.07):
+        super(InfoNCELoss, self).__init__()
+        self.temperature = initial_temp #nn.Parameter(torch.tensor([initial_temp]).log()) # Temperature as a learnable parameter, initialized with log(1/temp)
+
+    def forward(self, image_embeds, text_embeds):
+        '''
+        neg log liklihood of cosine similarities
+        cosine similarities = (a * b) / (|a| * |b|) --> if a and b are unit vectors (i.e. mag of 1, i.e. normalized) then cosine sim = a * b
+        tempture parameter smooths the prob dist.
+        '''
+        # Normalize the embeddings
+        image_embeds = F.normalize(image_embeds, dim=-1)
+        text_embeds = F.normalize(text_embeds, dim=-1)
+        # Negative keys are implicitly off-diagonal positive keys.
+        # Matrix mult for cosine between all combinations
+        logits = image_embeds @ text_embeds.transpose()
+        logits /= self.temperature
+
+        # Positive keys indexes along the diagional (i.e. labels)
+        labels = torch.arange(image_embeds.size(0), device=image_embeds.device)
+
+        '''
+        torch.nn.functional.cross_entropy(input, target)
+        ---
+        input (Tensor) : Predicted unnormalized logits; see Shape section below for supported shapes.
+        target (Tensor) : Ground truth class indices or class probabilities; see Shape section below for supported shapes.
+        '''
+        loss = F.cross_entropy(logits, labels) # softmax is applied to logits to convert them to a probability distribution
+
+        return loss
