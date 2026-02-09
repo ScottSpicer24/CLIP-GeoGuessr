@@ -7,4 +7,5 @@ src/data
 src/train/__pycache__
 src/train/pretrain_out.txt
 src/train/OpenBLAS
+src/train/model_weights/
 
